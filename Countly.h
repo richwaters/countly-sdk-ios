@@ -34,4 +34,10 @@
 
 @end
 
+@interface Countly(GH)
+-(void) flushEvents;
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count timestamp:(time_t)timeStamp;
+@end
+
+
 

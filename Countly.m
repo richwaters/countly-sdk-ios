@@ -647,11 +647,14 @@ NSString* CountlyURLUnescapedString(NSString* string)
 
 - (void)start:(NSString *)appKey withHost:(NSString *)appHost
 {
+    /*
+     * R.A.W.
 	timer = [NSTimer scheduledTimerWithTimeInterval:COUNTLY_DEFAULT_UPDATE_INTERVAL
 											 target:self
 										   selector:@selector(onTimer:)
 										   userInfo:nil
 											repeats:YES];
+     */
 	lastTime = CFAbsoluteTimeGetCurrent();
 	[[CountlyConnectionQueue sharedInstance] setAppKey:appKey];
 	[[CountlyConnectionQueue sharedInstance] setAppHost:appHost];
@@ -694,6 +697,7 @@ NSString* CountlyURLUnescapedString(NSString* string)
     if (eventQueue.count >= COUNTLY_EVENT_SEND_THRESHOLD)
         [[CountlyConnectionQueue sharedInstance] recordEvents:[eventQueue events]];
 }
+
 
 - (void)onTimer:(NSTimer *)timer
 {
@@ -777,3 +781,58 @@ NSString* CountlyURLUnescapedString(NSString* string)
 }
 
 @end
+
+
+
+@implementation Countly(GH)
+
+
+// R.A.W.
+-(void) flushEvents
+{
+    [[CountlyConnectionQueue sharedInstance] recordEvents:[eventQueue events]];
+}
+
+
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count timestamp:(time_t)timeStamp
+{
+    if( !timeStamp ) {
+        timeStamp = time(NULL) ;
+    }
+    
+    @synchronized (self)
+    {
+        NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
+        for (NSManagedObject* obj in events)
+        {
+            CountlyEvent *event = [CountlyEvent objectWithManagedObject:obj];
+            if ([event.key isEqualToString:key] &&
+                event.segmentation && [event.segmentation isEqualToDictionary:segmentation])
+            {
+                event.count += count;
+                event.timestamp = (event.timestamp + timeStamp) / 2;
+                
+                [obj setValue:@(event.count) forKey:@"count"];
+                [obj setValue:@(event.timestamp) forKey:@"timestamp"];
+                
+                [[CountlyDB sharedInstance] saveContext];
+                
+                return;
+            }
+        }
+        
+        CountlyEvent *event = [[CountlyEvent new] autorelease];
+        event.key = key;
+        event.segmentation = segmentation;
+        event.count = count;
+        event.timestamp = timeStamp;
+        
+        [[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
+    }
+}
+
+
+@end
+
+
+
