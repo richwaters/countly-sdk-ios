@@ -647,14 +647,11 @@ NSString* CountlyURLUnescapedString(NSString* string)
 
 - (void)start:(NSString *)appKey withHost:(NSString *)appHost
 {
-    /*
-     * R.A.W.
 	timer = [NSTimer scheduledTimerWithTimeInterval:COUNTLY_DEFAULT_UPDATE_INTERVAL
 											 target:self
 										   selector:@selector(onTimer:)
 										   userInfo:nil
 											repeats:YES];
-     */
 	lastTime = CFAbsoluteTimeGetCurrent();
 	[[CountlyConnectionQueue sharedInstance] setAppKey:appKey];
 	[[CountlyConnectionQueue sharedInstance] setAppHost:appHost];
@@ -784,8 +781,13 @@ NSString* CountlyURLUnescapedString(NSString* string)
 
 
 
-@implementation Countly(GH)
+@implementation Countly(NoTimer)
 
+- (void)startNoTimer:(NSString *)appKey withHost:(NSString *)appHost
+{
+    [self start:appKey withHost:appHost] ;
+    [timer invalidate] , timer = nil ;
+}
 
 // R.A.W.
 -(void) flushEvents

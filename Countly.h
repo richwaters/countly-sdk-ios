@@ -34,9 +34,10 @@
 
 @end
 
-@interface Countly(GH)
+@interface Countly(NoTimer)
 -(void) flushEvents;
 - (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count timestamp:(time_t)timeStamp;
+- (void)startNoTimer:(NSString *)appKey withHost:(NSString *)appHost;
 @end
 
 
