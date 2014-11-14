@@ -576,6 +576,19 @@ NSString* const kCLYUserBirthYear = @"byear";
 #endif
     
     NSString *data = [dataQueue[0] valueForKey:@"post"];
+
+    //R.A.W.
+    const NSInteger maxReqLength = 1024*8 ;
+    while( [data length] > maxReqLength ) {
+        COUNTLY_LOG(@"Event data too big. Length: %ld\n %@", (long)[data length]);
+
+        [[CountlyDB sharedInstance] removeFromQueue:dataQueue[0]];
+        if( ![dataQueue count]) {
+            return ;
+        }
+        data = [dataQueue[0] valueForKey:@"post"];
+    }
+
     NSString *urlString = [NSString stringWithFormat:@"%@/i?%@", self.appHost, data];
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:urlString]];
     self.connection = [NSURLConnection connectionWithRequest:request delegate:self];
