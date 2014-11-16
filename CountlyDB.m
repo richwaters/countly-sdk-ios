@@ -7,6 +7,8 @@
 
 #import "CountlyDB.h"
 
+#ifndef COUNTLY_DISABLE_COREDATA
+
 #if __has_feature(objc_arc)
 #error  This is a non-ARC class. Please add -fno-objc-arc flag for Countly.m, Countly_OpenUDID.m and CountlyDB.m under Build Phases > Compile Sources
 #endif
@@ -27,12 +29,19 @@
 
 @implementation CountlyDB
 
+/* R.A.W.
 +(instancetype)sharedInstance
 {
     static CountlyDB* s_sharedCountlyDB;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{s_sharedCountlyDB = self.new;});
 	return s_sharedCountlyDB;
+}
+ */
+
+-(void) saveObject:(NSObject *)obj
+{
+    [self saveContext];
 }
 
 -(void)createEvent:(NSString*) eventKey count:(double)count sum:(double)sum segmentation:(NSDictionary*)segmentation timestamp:(NSTimeInterval)timestamp
@@ -256,6 +265,9 @@
 }
 
 @end
+
+
+#endif
 
 
 

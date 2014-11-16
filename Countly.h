@@ -7,6 +7,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "CountlyDB.h"
+
 @class CountlyEventQueue;
 
 @interface Countly : NSObject
@@ -18,11 +20,23 @@
     CountlyEventQueue *eventQueue;
 }
 
+@property(nonatomic,retain)  id<CountlyDB> countlyDB ;  // R.A.W.
+
 + (instancetype)sharedInstance;
 
-- (void)start:(NSString *)appKey withHost:(NSString *)appHost;
 
+#ifndef COUNTLY_DISABLE_COREDATA  // R.A.W.
+
+- (void)start:(NSString *)appKey withHost:(NSString *)appHost;
 - (void)startOnCloudWithAppKey:(NSString *)appKey;
+
+
+#endif
+
+- (void)resume;
+- (void)suspend;
+- (void)exit;
+
 
 - (void)recordEvent:(NSString *)key count:(int)count;
 
@@ -47,8 +61,10 @@
 @interface Countly(NoTimer)
 -(void) flushEvents;
 - (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count timestamp:(time_t)timeStamp;
-- (void)startNoTimer:(NSString *)appKey withHost:(NSString *)appHost;
+- (void)startNoTimer:(NSString *)appKey withHost:(NSString *)appHost  countlyDb:(id<CountlyDB>)countlyDB;
 @end
+
+
 
 
 

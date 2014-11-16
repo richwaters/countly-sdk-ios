@@ -28,6 +28,10 @@
 #   define COUNTLY_LOG(...)
 #endif
 
+#ifdef COUNTLY_DISABLE_COREDATA
+#define NSManagedObject NSObject
+#endif
+
 #define COUNTLY_VERSION "2.0"
 #define COUNTLY_DEFAULT_UPDATE_INTERVAL 60.0
 #define COUNTLY_EVENT_SEND_THRESHOLD 10
@@ -323,6 +327,7 @@ NSString* const kCLYUserBirthYear = @"byear";
     [super dealloc];
 }
 
+
 + (CountlyEvent*)objectWithManagedObject:(NSManagedObject*)managedObject
 {
 	CountlyEvent* event = [[CountlyEvent new] autorelease];
@@ -354,6 +359,7 @@ NSString* const kCLYUserBirthYear = @"byear";
 
 #pragma mark - CountlyEventQueue
 
+
 @interface CountlyEventQueue : NSObject
 
 @end
@@ -370,7 +376,8 @@ NSString* const kCLYUserBirthYear = @"byear";
 {
     @synchronized (self)
     {
-        return [[CountlyDB sharedInstance] getEventCount];
+        //return [[CountlyDB sharedInstance] getEventCount]; R.A.W.
+        return  [[Countly sharedInstance].countlyDB getEventCount];
     }
 }
 
@@ -381,14 +388,16 @@ NSString* const kCLYUserBirthYear = @"byear";
     
 	@synchronized (self)
     {
-		NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
-		for (id managedEventObject in events)
+        //NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease]; R.A.W.
+        NSArray* events = [[[[Countly sharedInstance].countlyDB getEvents] copy] autorelease];
+        for (id managedEventObject in events)
         {
 			CountlyEvent* event = [CountlyEvent objectWithManagedObject:managedEventObject];
             
 			[result addObject:event.serializedData];
             
-            [CountlyDB.sharedInstance deleteEvent:managedEventObject];
+            //[CountlyDB.sharedInstance deleteEvent:managedEventObject];
+            [[Countly sharedInstance].countlyDB deleteEvent:managedEventObject];
         }
     }
     
@@ -399,7 +408,8 @@ NSString* const kCLYUserBirthYear = @"byear";
 {
     @synchronized (self)
     {
-        NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
+        //NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];  R.A.W.
+        NSArray* events = [[[[Countly sharedInstance].countlyDB getEvents] copy] autorelease];
         for (NSManagedObject* obj in events)
         {
             CountlyEvent *event = [CountlyEvent objectWithManagedObject:obj];
@@ -411,7 +421,8 @@ NSString* const kCLYUserBirthYear = @"byear";
                 [obj setValue:@(event.count) forKey:@"count"];
                 [obj setValue:@(event.timestamp) forKey:@"timestamp"];
                 
-                [[CountlyDB sharedInstance] saveContext];
+                //[[CountlyDB sharedInstance] saveContext]; R.A.W.
+                [[Countly sharedInstance].countlyDB saveObject:obj];
                 return;
             }
         }
@@ -421,7 +432,8 @@ NSString* const kCLYUserBirthYear = @"byear";
         event.count = count;
         event.timestamp = time(NULL);
         
-        [[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
+        //[[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
+        [[Countly sharedInstance].countlyDB createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
     }
 }
 
@@ -429,7 +441,8 @@ NSString* const kCLYUserBirthYear = @"byear";
 {
     @synchronized (self)
     {
-        NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
+        //NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
+        NSArray* events = [[ [[Countly sharedInstance].countlyDB getEvents] copy] autorelease];
         for (NSManagedObject* obj in events)
         {
             CountlyEvent *event = [CountlyEvent objectWithManagedObject:obj];
@@ -443,8 +456,9 @@ NSString* const kCLYUserBirthYear = @"byear";
                 [obj setValue:@(event.sum) forKey:@"sum"];
                 [obj setValue:@(event.timestamp) forKey:@"timestamp"];
                 
-                [[CountlyDB sharedInstance] saveContext];
-                
+                //[[CountlyDB sharedInstance] saveContext];
+                [[Countly sharedInstance].countlyDB saveObject:obj];
+
                 return;
             }
         }
@@ -455,7 +469,8 @@ NSString* const kCLYUserBirthYear = @"byear";
         event.sum = sum;
         event.timestamp = time(NULL);
         
-        [[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
+        //[[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];  R.A.W.
+        [[Countly sharedInstance].countlyDB createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
     }
 }
 
@@ -463,7 +478,8 @@ NSString* const kCLYUserBirthYear = @"byear";
 {
     @synchronized (self)
     {
-        NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
+        //NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];  R.A.W.
+        NSArray* events = [[[[Countly sharedInstance].countlyDB getEvents] copy] autorelease];
         for (NSManagedObject* obj in events)
         {
             CountlyEvent *event = [CountlyEvent objectWithManagedObject:obj];
@@ -476,8 +492,9 @@ NSString* const kCLYUserBirthYear = @"byear";
                 [obj setValue:@(event.count) forKey:@"count"];
                 [obj setValue:@(event.timestamp) forKey:@"timestamp"];
                 
-                [[CountlyDB sharedInstance] saveContext];
-                
+                //[[CountlyDB sharedInstance] saveContext];
+                [[Countly sharedInstance].countlyDB saveObject:obj];
+
                 return;
             }
         }
@@ -488,15 +505,21 @@ NSString* const kCLYUserBirthYear = @"byear";
         event.count = count;
         event.timestamp = time(NULL);
         
-        [[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
+        //[[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp]; R.A.W.
+        [[Countly sharedInstance].countlyDB createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
     }
 }
 
-- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count sum:(double)sum;
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count sum:(double)sum  timestamp:(time_t)timeStamp
 {
     @synchronized (self)
     {
-        NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
+        if( !timeStamp ) {
+            timeStamp = time(NULL) ;
+        }
+
+        //NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
+        NSArray* events = [[[[Countly sharedInstance].countlyDB getEvents] copy] autorelease];
         for (NSManagedObject* obj in events)
         {
             CountlyEvent *event = [CountlyEvent objectWithManagedObject:obj];
@@ -505,14 +528,15 @@ NSString* const kCLYUserBirthYear = @"byear";
             {
                 event.count += count;
                 event.sum += sum;
-                event.timestamp = (event.timestamp + time(NULL)) / 2;
+                event.timestamp = (event.timestamp + timeStamp) / 2;
                 
                 [obj setValue:@(event.count) forKey:@"count"];
                 [obj setValue:@(event.sum) forKey:@"sum"];
                 [obj setValue:@(event.timestamp) forKey:@"timestamp"];
                 
-                [[CountlyDB sharedInstance] saveContext];
-                
+                //[[CountlyDB sharedInstance] saveContext];
+                [[Countly sharedInstance].countlyDB saveObject:obj];
+
                 return;
             }
         }
@@ -522,14 +546,23 @@ NSString* const kCLYUserBirthYear = @"byear";
         event.segmentation = segmentation;
         event.count = count;
         event.sum = sum;
-        event.timestamp = time(NULL);
+        event.timestamp = timeStamp ;
         
-        [[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
+        //[[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];  R.A.W.
+        [[Countly sharedInstance].countlyDB createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
     }
 }
 
-@end
 
+// R.A.W.
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count sum:(double)sum
+{
+    [self recordEvent:key segmentation:segmentation count:count sum:sum timestamp:time(NULL)] ; 
+}
+
+
+
+@end
 
 #pragma mark - CountlyConnectionQueue
 
@@ -559,8 +592,9 @@ NSString* const kCLYUserBirthYear = @"byear";
 
 - (void) tick
 {
-    NSArray* dataQueue = [[[[CountlyDB sharedInstance] getQueue] copy] autorelease];
-    
+    //NSArray* dataQueue = [[[[CountlyDB sharedInstance] getQueue] copy] autorelease];
+    NSArray* dataQueue = [[[[Countly sharedInstance].countlyDB getQueue] copy] autorelease];
+
     if (self.connection != nil || [dataQueue count] == 0)
         return;
 
@@ -582,7 +616,8 @@ NSString* const kCLYUserBirthYear = @"byear";
     while( [data length] > maxReqLength ) {
         COUNTLY_LOG(@"Event data too big. Length: %ld\n %@", (long)[data length]);
 
-        [[CountlyDB sharedInstance] removeFromQueue:dataQueue[0]];
+        // [[CountlyDB sharedInstance] removeFromQueue:dataQueue[0]];  R.A.W.
+        [[Countly sharedInstance].countlyDB removeFromQueue:dataQueue[0]];
         if( ![dataQueue count]) {
             return ;
         }
@@ -604,8 +639,9 @@ NSString* const kCLYUserBirthYear = @"byear";
 					  time(NULL),
 					  [CountlyDeviceInfo metrics]];
     
-    [[CountlyDB sharedInstance] addToQueue:data];
-    
+    //[[CountlyDB sharedInstance] addToQueue:data]; R.A.W.
+    [[Countly sharedInstance].countlyDB addToQueue:data];
+
 	[self tick];
 }
 
@@ -617,8 +653,9 @@ NSString* const kCLYUserBirthYear = @"byear";
 					  time(NULL),
 					  duration];
     
-    [[CountlyDB sharedInstance] addToQueue:data];
-    
+    //[[CountlyDB sharedInstance] addToQueue:data];  // R.A.W.
+    [[Countly sharedInstance].countlyDB addToQueue:data];
+
 	[self tick];
 }
 
@@ -630,8 +667,9 @@ NSString* const kCLYUserBirthYear = @"byear";
 					  time(NULL),
 					  duration];
     
-    [[CountlyDB sharedInstance] addToQueue:data];
-    
+    //[[CountlyDB sharedInstance] addToQueue:data];  R.A.W.
+    [[Countly sharedInstance].countlyDB addToQueue:data];
+
 	[self tick];
 }
 
@@ -643,8 +681,9 @@ NSString* const kCLYUserBirthYear = @"byear";
                       time(NULL),
                       [[CountlyUserDetails sharedUserDetails] serialize]];
     
-    [[CountlyDB sharedInstance] addToQueue:data];
-    
+    //[[CountlyDB sharedInstance] addToQueue:data];  R.A.W.
+    [[Countly sharedInstance].countlyDB addToQueue:data];
+
     [self tick];
 }
 
@@ -656,15 +695,17 @@ NSString* const kCLYUserBirthYear = @"byear";
 					  time(NULL),
 					  events];
     
-    [[CountlyDB sharedInstance] addToQueue:data];
-    
+    //[[CountlyDB sharedInstance] addToQueue:data]; R.A.W.
+    [[Countly sharedInstance].countlyDB addToQueue:data];
+
 	[self tick];
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection
 {
-    NSArray* dataQueue = [[[CountlyDB sharedInstance] getQueue] copy];
-    
+    //NSArray* dataQueue = [[[CountlyDB sharedInstance] getQueue] copy];  R.A.W.
+    NSArray* dataQueue = [[[Countly sharedInstance].countlyDB getQueue] copy];
+
 	COUNTLY_LOG(@"Request Completed\n");
     
 #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
@@ -678,8 +719,9 @@ NSString* const kCLYUserBirthYear = @"byear";
 
     self.connection = nil;
     
-    [[CountlyDB sharedInstance] removeFromQueue:dataQueue[0]];
-    
+    //[[CountlyDB sharedInstance] removeFromQueue:dataQueue[0]]; R.A.W.
+    [[Countly sharedInstance].countlyDB removeFromQueue:dataQueue[0]];
+
     [dataQueue release];
     
     [self tick];
@@ -688,7 +730,8 @@ NSString* const kCLYUserBirthYear = @"byear";
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)err
 {
     #if COUNTLY_DEBUG
-        NSArray* dataQueue = [[[[CountlyDB sharedInstance] getQueue] copy] autorelease];
+        //NSArray* dataQueue = [[[[CountlyDB sharedInstance] getQueue] copy] autorelease]; R.A.W.
+        NSArray* dataQueue = [[ [Countly sharedInstance].countlyDB getQueue] copy] autorelease];
         COUNTLY_LOG(@"Request Failed \n %@: %@", [dataQueue[0] description], [err description]);
     #endif
     
@@ -752,6 +795,7 @@ NSString* const kCLYUserBirthYear = @"byear";
         eventQueue = [[CountlyEventQueue alloc] init];
 
 #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
+        /*
 		[[NSNotificationCenter defaultCenter] addObserver:self
 												 selector:@selector(didEnterBackgroundCallBack:)
 													 name:UIApplicationDidEnterBackgroundNotification
@@ -764,12 +808,13 @@ NSString* const kCLYUserBirthYear = @"byear";
 												 selector:@selector(willTerminateCallBack:)
 													 name:UIApplicationWillTerminateNotification
 												   object:nil];
+         */
 #endif
 	}
 	return self;
 }
 
-- (void)start:(NSString *)appKey withHost:(NSString *)appHost
+- (void)start:(NSString *)appKey withHost:(NSString *)appHost countlyDb:(id<CountlyDB>)countlyDB
 {
 	timer = [NSTimer scheduledTimerWithTimeInterval:COUNTLY_DEFAULT_UPDATE_INTERVAL
 											 target:self
@@ -779,13 +824,25 @@ NSString* const kCLYUserBirthYear = @"byear";
 	lastTime = CFAbsoluteTimeGetCurrent();
 	[[CountlyConnectionQueue sharedInstance] setAppKey:appKey];
 	[[CountlyConnectionQueue sharedInstance] setAppHost:appHost];
+    self.countlyDB = countlyDB ;  // R.A.W.
 	[[CountlyConnectionQueue sharedInstance] beginSession];
+}
+
+#ifndef COUNTLY_DISABLE_COREDATA
+
+- (void)start:(NSString *)appKey withHost:(NSString *)appHost
+{
+    CountlyDB *countlyDb = [[CountlyDB alloc]init] ;
+    [self start:appKey withHost:appHost countlyDb:countlyDb] ;
 }
 
 - (void)startOnCloudWithAppKey:(NSString *)appKey
 {
     [self start:appKey withHost:@"https://cloud.count.ly"];
 }
+
+#endif
+
 
 - (void)recordEvent:(NSString *)key count:(int)count
 {
@@ -883,11 +940,14 @@ NSString* const kCLYUserBirthYear = @"byear";
         timer = nil;
     }
     
-    [eventQueue release];
+    [eventQueue release], eventQueue = nil ;
+
+    [_countlyDB release] , _countlyDB = nil ;  // R.A.W.
 	
 	[super dealloc];
 }
 
+/*
 - (void)didEnterBackgroundCallBack:(NSNotification *)notification
 {
 	COUNTLY_LOG(@"App didEnterBackground");
@@ -903,9 +963,14 @@ NSString* const kCLYUserBirthYear = @"byear";
 - (void)willTerminateCallBack:(NSNotification *)notification
 {
 	COUNTLY_LOG(@"App willTerminate");
-    [[CountlyDB sharedInstance] saveContext];
-	[self exit];
+
+#ifndef COUNTLY_DISABLE_COREDATA
+    [((CountlyDB *)[Countly sharedInstance].countlyDB) saveContext];
+#endif
+
+    [self exit];
 }
+ */
 
 @end
 
@@ -913,9 +978,9 @@ NSString* const kCLYUserBirthYear = @"byear";
 
 @implementation Countly(NoTimer)
 
-- (void)startNoTimer:(NSString *)appKey withHost:(NSString *)appHost
+- (void)startNoTimer:(NSString *)appKey withHost:(NSString *)appHost countlyDb:(id<CountlyDB>)countlyDB
 {
-    [self start:appKey withHost:appHost] ;
+    [self start:appKey withHost:appHost countlyDb:countlyDB] ;
     [timer invalidate] , timer = nil ;
 }
 
@@ -925,42 +990,12 @@ NSString* const kCLYUserBirthYear = @"byear";
     [[CountlyConnectionQueue sharedInstance] recordEvents:[eventQueue events]];
 }
 
-
 - (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count timestamp:(time_t)timeStamp
 {
-    if( !timeStamp ) {
-        timeStamp = time(NULL) ;
-    }
-    
-    @synchronized (self)
-    {
-        NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
-        for (NSManagedObject* obj in events)
-        {
-            CountlyEvent *event = [CountlyEvent objectWithManagedObject:obj];
-            if ([event.key isEqualToString:key] &&
-                event.segmentation && [event.segmentation isEqualToDictionary:segmentation])
-            {
-                event.count += count;
-                event.timestamp = (event.timestamp + timeStamp) / 2;
-                
-                [obj setValue:@(event.count) forKey:@"count"];
-                [obj setValue:@(event.timestamp) forKey:@"timestamp"];
-                
-                [[CountlyDB sharedInstance] saveContext];
-                
-                return;
-            }
-        }
-        
-        CountlyEvent *event = [[CountlyEvent new] autorelease];
-        event.key = key;
-        event.segmentation = segmentation;
-        event.count = count;
-        event.timestamp = timeStamp;
-        
-        [[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
-    }
+    [eventQueue recordEvent:key segmentation:segmentation count:count sum:0 timestamp:timeStamp] ;
+
+    if (eventQueue.count >= COUNTLY_EVENT_SEND_THRESHOLD)
+        [[CountlyConnectionQueue sharedInstance] recordEvents:[eventQueue events]];
 }
 
 
