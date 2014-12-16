@@ -28,6 +28,10 @@
 #   define COUNTLY_LOG(...)
 #endif
 
+#ifdef COUNTLY_DISABLE_COREDATA
+#define NSManagedObject NSObject
+#endif
+
 #define COUNTLY_VERSION "2.0"
 #define COUNTLY_DEFAULT_UPDATE_INTERVAL 60.0
 #define COUNTLY_EVENT_SEND_THRESHOLD 10
@@ -373,6 +377,7 @@ NSString* const kCLYUserCustom = @"custom";
     [super dealloc];
 }
 
+
 + (CountlyEvent*)objectWithManagedObject:(NSManagedObject*)managedObject
 {
 	CountlyEvent* event = [[CountlyEvent new] autorelease];
@@ -404,6 +409,7 @@ NSString* const kCLYUserCustom = @"custom";
 
 #pragma mark - CountlyEventQueue
 
+
 @interface CountlyEventQueue : NSObject
 
 @end
@@ -420,7 +426,8 @@ NSString* const kCLYUserCustom = @"custom";
 {
     @synchronized (self)
     {
-        return [[CountlyDB sharedInstance] getEventCount];
+        //return [[CountlyDB sharedInstance] getEventCount]; R.A.W.
+        return  [[Countly sharedInstance].countlyDB getEventCount];
     }
 }
 
@@ -431,14 +438,16 @@ NSString* const kCLYUserCustom = @"custom";
     
 	@synchronized (self)
     {
-		NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
-		for (id managedEventObject in events)
+        //NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease]; R.A.W.
+        NSArray* events = [[[[Countly sharedInstance].countlyDB getEvents] copy] autorelease];
+        for (id managedEventObject in events)
         {
 			CountlyEvent* event = [CountlyEvent objectWithManagedObject:managedEventObject];
             
 			[result addObject:event.serializedData];
             
-            [CountlyDB.sharedInstance deleteEvent:managedEventObject];
+            //[CountlyDB.sharedInstance deleteEvent:managedEventObject];
+            [[Countly sharedInstance].countlyDB deleteEvent:managedEventObject];
         }
     }
     
@@ -449,7 +458,8 @@ NSString* const kCLYUserCustom = @"custom";
 {
     @synchronized (self)
     {
-        NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
+        //NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];  R.A.W.
+        NSArray* events = [[[[Countly sharedInstance].countlyDB getEvents] copy] autorelease];
         for (NSManagedObject* obj in events)
         {
             CountlyEvent *event = [CountlyEvent objectWithManagedObject:obj];
@@ -461,7 +471,8 @@ NSString* const kCLYUserCustom = @"custom";
                 [obj setValue:@(event.count) forKey:@"count"];
                 [obj setValue:@(event.timestamp) forKey:@"timestamp"];
                 
-                [[CountlyDB sharedInstance] saveContext];
+                //[[CountlyDB sharedInstance] saveContext]; R.A.W.
+                [[Countly sharedInstance].countlyDB saveObject:obj];
                 return;
             }
         }
@@ -471,7 +482,8 @@ NSString* const kCLYUserCustom = @"custom";
         event.count = count;
         event.timestamp = time(NULL);
         
-        [[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
+        //[[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
+        [[Countly sharedInstance].countlyDB createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
     }
 }
 
@@ -479,7 +491,8 @@ NSString* const kCLYUserCustom = @"custom";
 {
     @synchronized (self)
     {
-        NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
+        //NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
+        NSArray* events = [[ [[Countly sharedInstance].countlyDB getEvents] copy] autorelease];
         for (NSManagedObject* obj in events)
         {
             CountlyEvent *event = [CountlyEvent objectWithManagedObject:obj];
@@ -493,8 +506,9 @@ NSString* const kCLYUserCustom = @"custom";
                 [obj setValue:@(event.sum) forKey:@"sum"];
                 [obj setValue:@(event.timestamp) forKey:@"timestamp"];
                 
-                [[CountlyDB sharedInstance] saveContext];
-                
+                //[[CountlyDB sharedInstance] saveContext];
+                [[Countly sharedInstance].countlyDB saveObject:obj];
+
                 return;
             }
         }
@@ -505,7 +519,8 @@ NSString* const kCLYUserCustom = @"custom";
         event.sum = sum;
         event.timestamp = time(NULL);
         
-        [[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
+        //[[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];  R.A.W.
+        [[Countly sharedInstance].countlyDB createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
     }
 }
 
@@ -513,7 +528,8 @@ NSString* const kCLYUserCustom = @"custom";
 {
     @synchronized (self)
     {
-        NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
+        //NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];  R.A.W.
+        NSArray* events = [[[[Countly sharedInstance].countlyDB getEvents] copy] autorelease];
         for (NSManagedObject* obj in events)
         {
             CountlyEvent *event = [CountlyEvent objectWithManagedObject:obj];
@@ -526,8 +542,9 @@ NSString* const kCLYUserCustom = @"custom";
                 [obj setValue:@(event.count) forKey:@"count"];
                 [obj setValue:@(event.timestamp) forKey:@"timestamp"];
                 
-                [[CountlyDB sharedInstance] saveContext];
-                
+                //[[CountlyDB sharedInstance] saveContext];
+                [[Countly sharedInstance].countlyDB saveObject:obj];
+
                 return;
             }
         }
@@ -538,15 +555,21 @@ NSString* const kCLYUserCustom = @"custom";
         event.count = count;
         event.timestamp = time(NULL);
         
-        [[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
+        //[[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp]; R.A.W.
+        [[Countly sharedInstance].countlyDB createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
     }
 }
 
-- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count sum:(double)sum;
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count sum:(double)sum  timestamp:(time_t)timeStamp
 {
     @synchronized (self)
     {
-        NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
+        if( !timeStamp ) {
+            timeStamp = time(NULL) ;
+        }
+
+        //NSArray* events = [[[[CountlyDB sharedInstance] getEvents] copy] autorelease];
+        NSArray* events = [[[[Countly sharedInstance].countlyDB getEvents] copy] autorelease];
         for (NSManagedObject* obj in events)
         {
             CountlyEvent *event = [CountlyEvent objectWithManagedObject:obj];
@@ -555,14 +578,15 @@ NSString* const kCLYUserCustom = @"custom";
             {
                 event.count += count;
                 event.sum += sum;
-                event.timestamp = (event.timestamp + time(NULL)) / 2;
+                event.timestamp = (event.timestamp + timeStamp) / 2;
                 
                 [obj setValue:@(event.count) forKey:@"count"];
                 [obj setValue:@(event.sum) forKey:@"sum"];
                 [obj setValue:@(event.timestamp) forKey:@"timestamp"];
                 
-                [[CountlyDB sharedInstance] saveContext];
-                
+                //[[CountlyDB sharedInstance] saveContext];
+                [[Countly sharedInstance].countlyDB saveObject:obj];
+
                 return;
             }
         }
@@ -572,14 +596,23 @@ NSString* const kCLYUserCustom = @"custom";
         event.segmentation = segmentation;
         event.count = count;
         event.sum = sum;
-        event.timestamp = time(NULL);
+        event.timestamp = timeStamp ;
         
-        [[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
+        //[[CountlyDB sharedInstance] createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];  R.A.W.
+        [[Countly sharedInstance].countlyDB createEvent:event.key count:event.count sum:event.sum segmentation:event.segmentation timestamp:event.timestamp];
     }
 }
 
-@end
 
+// R.A.W.
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count sum:(double)sum
+{
+    [self recordEvent:key segmentation:segmentation count:count sum:sum timestamp:time(NULL)] ; 
+}
+
+
+
+@end
 
 #pragma mark - CountlyConnectionQueue
 
@@ -609,8 +642,9 @@ NSString* const kCLYUserCustom = @"custom";
 
 - (void) tick
 {
-    NSArray* dataQueue = [[[[CountlyDB sharedInstance] getQueue] copy] autorelease];
-    
+    //NSArray* dataQueue = [[[[CountlyDB sharedInstance] getQueue] copy] autorelease];
+    NSArray* dataQueue = [[[[Countly sharedInstance].countlyDB getQueue] copy] autorelease];
+
     if (self.connection != nil || [dataQueue count] == 0)
         return;
 
@@ -626,6 +660,20 @@ NSString* const kCLYUserCustom = @"custom";
 #endif
     
     NSString *data = [dataQueue[0] valueForKey:@"post"];
+
+    //R.A.W.
+    const NSInteger maxReqLength = 1024*8 ;
+    while( [data length] > maxReqLength ) {
+        COUNTLY_LOG(@"Event data too big. Length: %ld\n %@", (long)[data length]);
+
+        // [[CountlyDB sharedInstance] removeFromQueue:dataQueue[0]];  R.A.W.
+        [[Countly sharedInstance].countlyDB removeFromQueue:dataQueue[0]];
+        if( ![dataQueue count]) {
+            return ;
+        }
+        data = [dataQueue[0] valueForKey:@"post"];
+    }
+
     NSString *urlString = [NSString stringWithFormat:@"%@/i?%@", self.appHost, data];
     NSMutableURLRequest * request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
     
@@ -679,8 +727,9 @@ NSString* const kCLYUserCustom = @"custom";
 					  time(NULL),
 					  [CountlyDeviceInfo metrics]];
     
-    [[CountlyDB sharedInstance] addToQueue:data];
-    
+    //[[CountlyDB sharedInstance] addToQueue:data]; R.A.W.
+    [[Countly sharedInstance].countlyDB addToQueue:data];
+
 	[self tick];
 }
 
@@ -692,8 +741,9 @@ NSString* const kCLYUserCustom = @"custom";
 					  time(NULL),
 					  duration];
     
-    [[CountlyDB sharedInstance] addToQueue:data];
-    
+    //[[CountlyDB sharedInstance] addToQueue:data];  // R.A.W.
+    [[Countly sharedInstance].countlyDB addToQueue:data];
+
 	[self tick];
 }
 
@@ -705,8 +755,9 @@ NSString* const kCLYUserCustom = @"custom";
 					  time(NULL),
 					  duration];
     
-    [[CountlyDB sharedInstance] addToQueue:data];
-    
+    //[[CountlyDB sharedInstance] addToQueue:data];  R.A.W.
+    [[Countly sharedInstance].countlyDB addToQueue:data];
+
 	[self tick];
 }
 
@@ -718,8 +769,9 @@ NSString* const kCLYUserCustom = @"custom";
                       time(NULL),
                       [[CountlyUserDetails sharedUserDetails] serialize]];
     
-    [[CountlyDB sharedInstance] addToQueue:data];
-    
+    //[[CountlyDB sharedInstance] addToQueue:data];  R.A.W.
+    [[Countly sharedInstance].countlyDB addToQueue:data];
+
     [self tick];
 }
 
@@ -731,15 +783,17 @@ NSString* const kCLYUserCustom = @"custom";
 					  time(NULL),
 					  events];
     
-    [[CountlyDB sharedInstance] addToQueue:data];
-    
+    //[[CountlyDB sharedInstance] addToQueue:data]; R.A.W.
+    [[Countly sharedInstance].countlyDB addToQueue:data];
+
 	[self tick];
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection
 {
-    NSArray* dataQueue = [[[CountlyDB sharedInstance] getQueue] copy];
-    
+    //NSArray* dataQueue = [[[CountlyDB sharedInstance] getQueue] copy];  R.A.W.
+    NSArray* dataQueue = [[[Countly sharedInstance].countlyDB getQueue] copy];
+
 	COUNTLY_LOG(@"Request Completed\n");
     
 #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
@@ -753,8 +807,9 @@ NSString* const kCLYUserCustom = @"custom";
 
     self.connection = nil;
     
-    [[CountlyDB sharedInstance] removeFromQueue:dataQueue[0]];
-    
+    //[[CountlyDB sharedInstance] removeFromQueue:dataQueue[0]]; R.A.W.
+    [[Countly sharedInstance].countlyDB removeFromQueue:dataQueue[0]];
+
     [dataQueue release];
     
     [self tick];
@@ -763,7 +818,8 @@ NSString* const kCLYUserCustom = @"custom";
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)err
 {
     #if COUNTLY_DEBUG
-        NSArray* dataQueue = [[[[CountlyDB sharedInstance] getQueue] copy] autorelease];
+        //NSArray* dataQueue = [[[[CountlyDB sharedInstance] getQueue] copy] autorelease]; R.A.W.
+        NSArray* dataQueue = [[ [Countly sharedInstance].countlyDB getQueue] copy] autorelease];
         COUNTLY_LOG(@"Request Failed \n %@: %@", [dataQueue[0] description], [err description]);
     #endif
     
@@ -827,6 +883,7 @@ NSString* const kCLYUserCustom = @"custom";
         eventQueue = [[CountlyEventQueue alloc] init];
 
 #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
+        /*
 		[[NSNotificationCenter defaultCenter] addObserver:self
 												 selector:@selector(didEnterBackgroundCallBack:)
 													 name:UIApplicationDidEnterBackgroundNotification
@@ -839,12 +896,13 @@ NSString* const kCLYUserCustom = @"custom";
 												 selector:@selector(willTerminateCallBack:)
 													 name:UIApplicationWillTerminateNotification
 												   object:nil];
+         */
 #endif
 	}
 	return self;
 }
 
-- (void)start:(NSString *)appKey withHost:(NSString *)appHost
+- (void)start:(NSString *)appKey withHost:(NSString *)appHost countlyDb:(id<CountlyDB>)countlyDB
 {
 	timer = [NSTimer scheduledTimerWithTimeInterval:COUNTLY_DEFAULT_UPDATE_INTERVAL
 											 target:self
@@ -854,13 +912,25 @@ NSString* const kCLYUserCustom = @"custom";
 	lastTime = CFAbsoluteTimeGetCurrent();
 	[[CountlyConnectionQueue sharedInstance] setAppKey:appKey];
 	[[CountlyConnectionQueue sharedInstance] setAppHost:appHost];
+    self.countlyDB = countlyDB ;  // R.A.W.
 	[[CountlyConnectionQueue sharedInstance] beginSession];
+}
+
+#ifndef COUNTLY_DISABLE_COREDATA
+
+- (void)start:(NSString *)appKey withHost:(NSString *)appHost
+{
+    CountlyDB *countlyDb = [[CountlyDB alloc]init] ;
+    [self start:appKey withHost:appHost countlyDb:countlyDb] ;
 }
 
 - (void)startOnCloudWithAppKey:(NSString *)appKey
 {
     [self start:appKey withHost:@"https://cloud.count.ly"];
 }
+
+#endif
+
 
 - (void)recordEvent:(NSString *)key count:(int)count
 {
@@ -900,7 +970,6 @@ NSString* const kCLYUserCustom = @"custom";
     [CountlyUserDetails.sharedUserDetails deserialize:userDetails];
     [CountlyConnectionQueue.sharedInstance sendUserDetails];
 }
-
 
 - (void)onTimer:(NSTimer *)timer
 {
@@ -959,11 +1028,14 @@ NSString* const kCLYUserCustom = @"custom";
         timer = nil;
     }
     
-    [eventQueue release];
+    [eventQueue release], eventQueue = nil ;
+
+    [_countlyDB release] , _countlyDB = nil ;  // R.A.W.
 	
 	[super dealloc];
 }
 
+/*
 - (void)didEnterBackgroundCallBack:(NSNotification *)notification
 {
 	COUNTLY_LOG(@"App didEnterBackground");
@@ -979,8 +1051,43 @@ NSString* const kCLYUserCustom = @"custom";
 - (void)willTerminateCallBack:(NSNotification *)notification
 {
 	COUNTLY_LOG(@"App willTerminate");
-    [[CountlyDB sharedInstance] saveContext];
-	[self exit];
+
+#ifndef COUNTLY_DISABLE_COREDATA
+    [((CountlyDB *)[Countly sharedInstance].countlyDB) saveContext];
+#endif
+
+    [self exit];
 }
+ */
 
 @end
+
+
+
+@implementation Countly(NoTimer)
+
+- (void)startNoTimer:(NSString *)appKey withHost:(NSString *)appHost countlyDb:(id<CountlyDB>)countlyDB
+{
+    [self start:appKey withHost:appHost countlyDb:countlyDB] ;
+    [timer invalidate] , timer = nil ;
+}
+
+// R.A.W.
+-(void) flushEvents
+{
+    [[CountlyConnectionQueue sharedInstance] recordEvents:[eventQueue events]];
+}
+
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count timestamp:(time_t)timeStamp
+{
+    [eventQueue recordEvent:key segmentation:segmentation count:count sum:0 timestamp:timeStamp] ;
+
+    if (eventQueue.count >= COUNTLY_EVENT_SEND_THRESHOLD)
+        [[CountlyConnectionQueue sharedInstance] recordEvents:[eventQueue events]];
+}
+
+
+@end
+
+
+
